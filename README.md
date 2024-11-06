@@ -18,7 +18,7 @@ This script relies on [werpy](https://github.com/analyticsinmotion/werpy/blob/ma
 - calculate word error rate (WER) for each of the reference and hypothesis texts
 
 ## Licensing
-This script is created with an [MIT license](main/LICENSE).
+This script is created with an [MIT license](LICENSE).
 
 werpy is released under the terms of the BSD 3-Clause License. Please refer to its [LICENSE](https://github.com/analyticsinmotion/werpy/blob/main/LICENSE) file for full details.
 
