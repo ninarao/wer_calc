@@ -26,3 +26,6 @@ werpy also includes third-party packages distributed under the BSD-3-Clause lice
   - NumPy - [https://github.com/numpy/numpy/blob/main/LICENSE.txt](https://github.com/numpy/numpy/blob/main/LICENSE.txt)
   - Pandas - [https://github.com/pandas-dev/pandas/blob/main/LICENSE](https://github.com/pandas-dev/pandas/blob/main/LICENSE)
   - Cython - [https://github.com/cython/cython/blob/master/LICENSE.txt](https://github.com/cython/cython/blob/master/LICENSE.txt)
+
+## Misc
+Feedback, comments, suggestions, etc are welcome!
