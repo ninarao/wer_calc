@@ -11,9 +11,9 @@ The script matches reference files with generated files on filename, so files in
 
 It also requires that files are text ('.txt').  To run the script on caption or subtitle files, first use something like [srt2text](https://github.com/yumstar/srt2text/) to remove timing information and convert files to .txt.
 
-Before running this script, install werpy: `pip install werpy` or `pip3 install werpy`
+Before running this script, install [werpy](https://github.com/analyticsinmotion/werpy/blob/main/README.md): `pip install werpy` or `pip3 install werpy`
 
-This script relies on [werpy](https://github.com/analyticsinmotion/werpy/blob/main/README.md) to do the following:
+This script relies on `werpy` to do the following:
 - preprocess/normalize input text to remove punctuation, remove duplicated spaces, leading/trailing blanks and convert all words to lowercase
 - calculate word error rate (WER) for each of the reference and hypothesis texts
 
