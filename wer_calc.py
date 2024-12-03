@@ -5,6 +5,7 @@ import glob
 import os
 import werpy
 import csv
+import pandas as pd
 
 # script matches reference and generated text files on filename
 # (i.e. it assumes that reference and generated files have the same filename)
@@ -49,6 +50,7 @@ outputFile = arg3
 # check for existing output file
 # if none exists, create
 # if output file exists, ask whether to exit or overwrite
+
 print("Checking for output file...")
 if not os.path.exists(outputFile):
     with open(outputFile, 'w') as outFile:
@@ -65,36 +67,38 @@ else:
             print("Overwriting file %s" % outputFile)
             break
 
-with open(outputFile, 'w') as outFile:
-    outWriter = csv.writer(outFile, delimiter=',', lineterminator='\n')
-    header = ['Reference','Generated','WER']
-    outWriter.writerow(header)
+def check_srt(dir:str, filename:str):
+    """
+    Checks whether a transcript file is in TXT or SRT format. If the file is in TXT format, returns the data unchanged. If the file is in SRT format, the function converts the file to TXT and returns the converted data.
+    """
+    if filename.endswith('.txt')==True:
+        f=open(dir+"/"+filename, "r")
+        data = f.read()
+    elif filename.endswith('.srt')==True:
+        original_filename_noext=filename.split('.srt')[0]
+        absolute_original_filepath=dir+"/"+filename
+        absolute_converted_filepath=dir+"/"+original_filename_noext+"_converted.txt"
+        command=f"python3 srt2text.py -s {absolute_original_filepath} -o {absolute_converted_filepath}"
+        os.system(command)
+        f=open(absolute_converted_filepath, "r")
+        data = f.read()
+        os.remove(absolute_converted_filepath) 
+    return data
 
+# Open the output file as a Pandas dataframe
+df= pd.read_csv(outputFile, dtype="str")
+for index, row in df.iterrows():
+    # Run check_srt function on both reference and generated files
+    reference_data= check_srt(refDir, row["Reference"])
+    generated_data = check_srt(genDir, row["Generated"])
+    refNormal = werpy.normalize(reference_data)
+    genNormal = werpy.normalize(generated_data)
+    # Calculate WER from reference and generated data
+    wers = werpy.wers(refNormal, genNormal)
+    werString = str(wers)
+    row["WER"]=werString
 
-# calculate WER for each pair of files
-for filename in glob.glob(refDir + '/*.txt'):
-    origFile = os.path.basename(filename)
-    genPath = os.path.join(genDir, origFile)
-    genFile = os.path.basename(genPath)
-    
-    with open(filename, 'r') as editedFile:
-        reference = editedFile.read()
-        input_ref = reference
-        refNormal = werpy.normalize(input_ref)
-    
-    with open(genPath, 'r') as rawFile:
-        generated = rawFile.read()
-        input_gen = generated
-        genNormal = werpy.normalize(input_gen)
-        wers = werpy.wers(refNormal, genNormal)
-        werString = str(wers)
-        line = [origFile, genFile, werString]
-
-# write WER result to output file
-    with open(outputFile, 'a') as outFile:
-        outWriter = csv.writer(outFile, delimiter=',', lineterminator='\n')
-        outWriter.writerows([line])
-            
-    print('Reference: ' + origFile + ', Generated: ' + genFile + ', WER: ' + werString)
+# Write WER to output file
+df.to_csv(outputFile, index=False)
 
 print('Done')
