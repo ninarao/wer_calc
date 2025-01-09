@@ -7,11 +7,13 @@ import werpy
 import csv
 import pandas as pd
 
-# script matches reference and generated text files on filename
-# (i.e. it assumes that reference and generated files have the same filename)
+# script matches reference and generated files via csv
+# reference and generated files must be srt or txt
 
 # sys.argv = ['wer_calc.py', '[path/to/reference-directory]', '[path/to/generated-directory]', '[path/to/output.csv]']
 
+print("This script matches reference and generated files via csv file.")
+print("Reference and generated files must be .srt or .txt")
 
 # check that command has reference folder location, generated folder location,
 # and output file location
@@ -29,8 +31,8 @@ if not os.path.isdir(sys.argv[2]):
     print("Usage: python wer_calc.py [path/to/reference-directory] [path/to/generated-directory] [path/to/output.csv]")
     sys.exit(1)
 
-if os.path.splitext(sys.argv[3])[1] == "":
-    print("Error: %s is not a valid file." % sys.argv[3])
+if os.path.splitext(sys.argv[3])[1] == "" or os.path.splitext(sys.argv[3])[1] != ".csv":
+    print("Error: %s is not a valid file. Must be csv file." % sys.argv[3])
     print("Usage: python wer_calc.py [path/to/reference-directory] [path/to/generated-directory] [path/to/output.csv]")
     sys.exit(1)
 
@@ -51,26 +53,27 @@ outputFile = arg3
 # if none exists, create
 # if output file exists, ask whether to exit or overwrite
 
-print("Checking for output file...")
-if not os.path.exists(outputFile):
-    with open(outputFile, 'w') as outFile:
-        outWriter = csv.writer(outFile, delimiter=',', lineterminator='\n')
-        header = ['Reference','Generated','WER']
-        outWriter.writerow(header)
-else:
-    while True:
-        print("Output file %s already exists\nDo you want to overwrite? (y/n)" % outputFile)
-        userDecide = input()
-        if userDecide == "n":
-            sys.exit("Exiting")
-        elif userDecide == "y":
-            print("Overwriting file %s" % outputFile)
-            break
+# print("Checking for output file...")
+# if not os.path.exists(outputFile):
+#     with open(outputFile, 'w') as outFile:
+#         outWriter = csv.writer(outFile, delimiter=',', lineterminator='\n')
+#         header = ['Reference','Generated','WER']
+#         outWriter.writerow(header)
+# else:
+#     while True:
+#         print("Output file %s already exists\nDo you want to overwrite? (y/n)" % outputFile)
+#         userDecide = input()
+#         if userDecide == "n":
+#             sys.exit("Exiting")
+#         elif userDecide == "y":
+#             print("Overwriting file %s" % outputFile)
+#             break
 
-def check_srt(dir:str, filename:str):
+def check_srt(dir:str, filename_float:str):
     """
     Checks whether a transcript file is in TXT or SRT format. If the file is in TXT format, returns the data unchanged. If the file is in SRT format, the function converts the file to TXT and returns the converted data.
     """
+    filename = str(filename_float)
     if filename.endswith('.txt')==True:
         f=open(dir+"/"+filename, "r")
         data = f.read()
@@ -93,10 +96,25 @@ for index, row in df.iterrows():
     generated_data = check_srt(genDir, row["Generated"])
     refNormal = werpy.normalize(reference_data)
     genNormal = werpy.normalize(generated_data)
+    # Check if WER cell is empty
+    if not pd.isna(df.loc[index, 'WER']):
+        while True:
+            wer_cell = df.loc[index, 'WER']
+            print("WER cell not empty (%s), do you want to overwrite? (y/n)" % wer_cell)
+            userDecide = input()
+            if userDecide == "n":
+                break
+            elif userDecide == "y":
+                print("Overwriting WER entry")
     # Calculate WER from reference and generated data
-    wers = werpy.wers(refNormal, genNormal)
-    werString = str(wers)
-    row["WER"]=werString
+                wers = werpy.wers(refNormal, genNormal)
+                werString = str(wers)
+                row["WER"]=werString
+                break
+    else:
+        wers = werpy.wers(refNormal, genNormal)
+        werString = str(wers)
+        row["WER"]=werString
 
 # Write WER to output file
 df.to_csv(outputFile, index=False)
