@@ -12,7 +12,7 @@ Create a CSV file ("output.csv") where WER will be written to, with the followin
 
 The script matches reference files with generated files by looking up the corresponding reference filename in the "Generated" column. The corresponding WER will be written to the "WER" column in the same row.
 
-Files can be in TXT (".txt") or SRT (".srt") format. This script uses [srt2text](https://github.com/yumstar/srt2text/) to convert SRT files to raw text data.
+Files can be in TXT (".txt") or SRT (".srt") format. This script uses [srt2text](https://github.com/yumstar/srt2text/) to convert SRT files to raw text data. (Note: the folder-level option for srt2text won't work if there is a hidden DS_store file in the input folder.)
 
 Before running this script, install [werpy](https://github.com/analyticsinmotion/werpy/blob/main/README.md): `pip install werpy` or `pip3 install werpy`
 
