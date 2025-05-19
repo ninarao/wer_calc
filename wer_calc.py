@@ -75,7 +75,7 @@ def check_srt(dir:str, filename_float:str):
     """
     filename = str(filename_float)
     if filename.endswith('.txt')==True:
-        f=open(dir+"/"+filename, "r")
+        f=open(dir+"/"+filename, "r", encoding="utf8")
         data = f.read()
     elif filename.endswith('.srt')==True:
         original_filename_noext=filename.split('.srt')[0]
@@ -83,7 +83,7 @@ def check_srt(dir:str, filename_float:str):
         absolute_converted_filepath=dir+"/"+original_filename_noext+"_converted.txt"
         command=f"python3 srt2text.py -s {absolute_original_filepath} -o {absolute_converted_filepath}"
         os.system(command)
-        f=open(absolute_converted_filepath, "r")
+        f=open(absolute_converted_filepath, "r", encoding="utf8")
         data = f.read()
         os.remove(absolute_converted_filepath) 
     return data
