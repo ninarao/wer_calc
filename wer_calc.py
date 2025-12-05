@@ -6,6 +6,7 @@ import os
 import werpy
 import csv
 import pandas as pd
+import re
 
 # script matches reference and generated files via csv
 # reference and generated files must be srt or txt
@@ -49,43 +50,57 @@ genDir = arg2
 outputFile = arg3
 
 
-# check for existing output file
-# if none exists, create
-# if output file exists, ask whether to exit or overwrite
+def srt_to_txt(file_path):
+    just_read_interval = False
+    output_line = ""
+    with open(file_path, 'r', encoding="utf8") as srt_file:
+        txt_version = ""
+        for line in srt_file:
+            # if line consists of single integer ==> sequence number
+            if re.match(r'^\d+\n$', line):
+                just_read_interval = False
+            # if line consists of time interval ==> subtitle timing
+            if re.match(r'^\d{2,}:[0-5][0-9]:[0-5][0-9],\d{3} --> \d{2,}:[0-5][0-9]:[0-5][0-9],\d{3}\n$', line):
+                just_read_interval = True
+            # if time interval was just read, current line is subtile text
+            # or space between subtitle timing block  ==> write line to text file
+            elif just_read_interval:
+                output_line = line
+                txt_version += output_line
+        return txt_version                
 
-# print("Checking for output file...")
-# if not os.path.exists(outputFile):
-#     with open(outputFile, 'w') as outFile:
-#         outWriter = csv.writer(outFile, delimiter=',', lineterminator='\n')
-#         header = ['Reference','Generated','WER']
-#         outWriter.writerow(header)
-# else:
-#     while True:
-#         print("Output file %s already exists\nDo you want to overwrite? (y/n)" % outputFile)
-#         userDecide = input()
-#         if userDecide == "n":
-#             sys.exit("Exiting")
-#         elif userDecide == "y":
-#             print("Overwriting file %s" % outputFile)
-#             break
-
+def vtt_to_txt(file_path):
+    just_read_interval = False
+    output_line = ""
+    with open(file_path, 'r', encoding="utf8") as vtt_file:    
+        txt_version = ""
+        for line in vtt_file:
+            # if line consists of time interval ==> subtitle timing
+            if re.match(r'^\d{2,}:[0-5][0-9]:[0-5][0-9].\d{3} --> \d{2,}:[0-5][0-9]:[0-5][0-9].\d{3}\n$', line) or re.match(r'[0-5][0-9]:[0-5][0-9].\d{3} --> [0-5][0-9]:[0-5][0-9].\d{3}\n$', line):
+                just_read_interval = True
+            # if time interval was just read, current line is subtile text
+            # or space between subtitle timing block  ==> write line to text file
+            elif just_read_interval:
+                output_line = line
+                txt_version += output_line
+            # if line consists of single integer ==> sequence number
+            elif re.search(r'^$', line, re.MULTILINE):
+                just_read_interval = False
+        return txt_version
+    
 def check_srt(dir:str, filename_float:str):
     """
-    Checks whether a transcript file is in TXT or SRT format. If the file is in TXT format, returns the data unchanged. If the file is in SRT format, the function converts the file to TXT and returns the converted data.
+    Checks whether a transcript file is in TXT or SRT format.
+    If the file is in TXT format, returns the data unchanged. 
+    If the file is in SRT format, calls srt_to_txt function and returns the converted data.
     """
     filename = str(filename_float)
+    file_path = os.path.join(dir, filename)
     if filename.endswith('.txt')==True:
-        f=open(dir+"/"+filename, "r", encoding="utf8")
+        f=open(file_path, "r", encoding="utf8")
         data = f.read()
     elif filename.endswith('.srt')==True:
-        original_filename_noext=filename.split('.srt')[0]
-        absolute_original_filepath=dir+"/"+filename
-        absolute_converted_filepath=dir+"/"+original_filename_noext+"_converted.txt"
-        command=f"python3 srt2text.py -s {absolute_original_filepath} -o {absolute_converted_filepath}"
-        os.system(command)
-        f=open(absolute_converted_filepath, "r", encoding="utf8")
-        data = f.read()
-        os.remove(absolute_converted_filepath) 
+        data = srt_to_txt(file_path)
     return data
 
 # Open the output file as a Pandas dataframe
