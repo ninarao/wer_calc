@@ -2,6 +2,7 @@
 
 import sys
 import os
+import argparse
 import werpy
 import pandas as pd
 import re
@@ -10,43 +11,57 @@ import re
 # reference and generated files must be srt or txt
 
 # sys.argv = ['wer_calc.py', '[path/to/reference-directory]', '[path/to/generated-directory]', '[path/to/output.csv]']
+sys.argv = [
+    'wer_calc.py',
+    '/Users/nraogra/Desktop/Captioning/Edited_captions/Captions_first_edits/OH_First_complete/SRT',
+    '/Users/nraogra/Desktop/Captioning/Generated_output/whisper_turbo_detectlang/OH_turbo',
+    '/Users/nraogra/Desktop/OH_test.csv'
+    ]
 
 print("This script matches reference and generated files via csv file.")
 print("Reference and generated files must be .srt, .vtt, or .txt")
 
-# check that command has reference folder location, generated folder location,
-# and output file location
-if len(sys.argv) != 4:
-    print("Usage: python wer_calc.py [path/to/reference-directory] [path/to/generated-directory] [path/to/output.csv]")
-    sys.exit(1)
+def valid_directory(path_string):
+    if not os.path.isdir(path_string):
+        raise argparse.ArgumentTypeError(f"'{path_string}' is not a valid directory.")
+    return path_string
 
-if not os.path.isdir(sys.argv[1]):
-    print("Error: %s is not a valid directory." % sys.argv[1])
-    print("Usage: python wer_calc.py [path/to/reference-directory] [path/to/generated-directory] [path/to/output.csv]")
-    sys.exit(1)
-    
-if not os.path.isdir(sys.argv[2]):
-    print("Error: %s is not a valid directory." % sys.argv[2])
-    print("Usage: python wer_calc.py [path/to/reference-directory] [path/to/generated-directory] [path/to/output.csv]")
-    sys.exit(1)
+def valid_csv(path_csv):
+    if not os.path.isfile(path_csv):
+        raise argparse.ArgumentTypeError(f"'{path_csv}' is not a valid csv file.")
+    if not path_csv.endswith(".csv"):
+        raise argparse.ArgumentTypeError(f"'{path_csv}' is not a valid csv file.")
+    else:
+        return path_csv
 
-if os.path.splitext(sys.argv[3])[1] == "" or os.path.splitext(sys.argv[3])[1] != ".csv":
-    print("Error: %s is not a valid file. Must be csv file." % sys.argv[3])
-    print("Usage: python wer_calc.py [path/to/reference-directory] [path/to/generated-directory] [path/to/output.csv]")
-    sys.exit(1)
+# sets media directory, optional csv, and overwrite option
+def setup(args_):
+    parser = argparse.ArgumentParser()
 
-arg1 = sys.argv[1]
-arg2 = sys.argv[2]
-arg3 = sys.argv[3]
+    parser.add_argument(
+        "reference_directory",
+        type=valid_directory,
+        help="Directory of reference files"
+        )
+    parser.add_argument(
+        "generated_directory",
+        type=valid_directory,
+        help="Directory of generated files"
+        )
+    parser.add_argument(
+        "output_csv",
+        type=valid_csv,
+        help="output csv"
+        )
+    parser.add_argument(
+        "-o",
+        "--overwrite",
+        action="store_true",
+        help="overwrite any existing WER data in csv"
+        )
 
-print('Reference folder:',arg1)
-print('Generated folder:',arg2)
-print('Output file:',arg3)
-
-refDir = arg1
-genDir = arg2
-outputFile = arg3
-
+    args = parser.parse_args(args_)
+    return args
 
 def srt_to_txt(file_path):
     just_read_interval = False
@@ -109,41 +124,70 @@ def check_srt(dir:str, filename_float:str):
         data = filename
     return data, validFormat
 
-# Open the output file as a Pandas dataframe
-df= pd.read_csv(outputFile, dtype="str")
-for index, row in df.iterrows():
-    # Run check_srt function on both reference and generated files
-    reference_data, validFormat = check_srt(refDir, row["Reference"])
-    if validFormat == "No":
-        print(f'Row contains a file {reference_data} that is not the right format; skipping row.')
-    generated_data, validFormat = check_srt(genDir, row["Generated"])
-    if validFormat == "No":
-        print(f'Row contains a file {generated_data} that is not the right format; skipping row.')
-    else:
-        refNormal = werpy.normalize(reference_data)
-        genNormal = werpy.normalize(generated_data)
-        # Check if WER cell is empty
-        if not pd.isna(df.loc[index, 'WER']):
-            while True:
-                wer_cell = df.loc[index, 'WER']
-                print("WER cell not empty (%s), do you want to overwrite? (y/n)" % wer_cell)
-                userDecide = input()
-                if userDecide == "n":
-                    break
-                elif userDecide == "y":
-                    print("Overwriting WER entry")
-        # Calculate WER from reference and generated data and write to output file
+def main(args_):
+    args = setup(args_)
+    
+    arg1 = args.reference_directory
+    print('reference directory: ',arg1)
+
+    arg2 = args.generated_directory
+    print('generated directory: ',arg2)
+    
+    arg3 = args.output_csv
+    print('output csv: ',arg3)
+
+    if args.overwrite == True:
+        print("Existing output files will be overwritten.")
+        
+    refDir = arg1
+    genDir = arg2
+    outputFile = arg3
+
+    # Open the output file as a Pandas dataframe
+    df= pd.read_csv(outputFile, dtype="str")
+    for index, row in df.iterrows():
+        # Run check_srt function on both reference and generated files
+        reference_data, validFormat = check_srt(refDir, row["Reference"])
+        if validFormat == "No":
+            print(f'Row contains a file {reference_data} that is not the right format; skipping row.')
+        generated_data, validFormat = check_srt(genDir, row["Generated"])
+        if validFormat == "No":
+            print(f'Row contains a file {generated_data} that is not the right format; skipping row.')
+        else:
+            refNormal = werpy.normalize(reference_data)
+            genNormal = werpy.normalize(generated_data)
+            # Check if WER cell is empty
+            if not pd.isna(df.loc[index, 'WER']):
+                if args.overwrite == True:
                     wers = werpy.wers(refNormal, genNormal)
                     werString = str(wers)
                     row["WER"]=werString
                     print(werString)
                     df.to_csv(outputFile, index=False)
-                    break
-        else:
-            wers = werpy.wers(refNormal, genNormal)
-            werString = str(wers)
-            row["WER"]=werString
-            print(werString)
-            df.to_csv(outputFile, index=False)
+                else:
+                    while True:
+                        wer_cell = df.loc[index, 'WER']
+                        print("WER cell not empty (%s), do you want to overwrite? (y/n)" % wer_cell)
+                        userDecide = input()
+                        if userDecide == "n":
+                            break
+                        elif userDecide == "y":
+                            print("Overwriting WER entry")
+                # Calculate WER from reference and generated data and write to output file
+                            wers = werpy.wers(refNormal, genNormal)
+                            werString = str(wers)
+                            row["WER"]=werString
+                            print(werString)
+                            df.to_csv(outputFile, index=False)
+                            break
+            else:
+                wers = werpy.wers(refNormal, genNormal)
+                werString = str(wers)
+                row["WER"]=werString
+                print(werString)
+                df.to_csv(outputFile, index=False)
 
-print('Done')
+    print('Done')
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
