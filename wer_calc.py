@@ -28,7 +28,7 @@ def valid_csv(path_csv):
     else:
         return path_csv
 
-# sets media directory, optional csv, and overwrite option
+# sets reference directory, generated directory, output csv, and overwrite option
 def setup(args_):
     parser = argparse.ArgumentParser()
 
