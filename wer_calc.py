@@ -10,15 +10,9 @@ import re
 # reference and generated files must be srt or txt
 
 # sys.argv = ['wer_calc.py', '[path/to/reference-directory]', '[path/to/generated-directory]', '[path/to/output.csv]']
-sys.argv = [
-    'wer_calc.py',
-    '/Users/nraogra/Desktop/Captioning/Edited_captions/Captions_first_edits/OH_First_complete/SRT',
-    '/Users/nraogra/Desktop/Captioning/Generated_output/whisper_turbo_detectlang/OH_turbo',
-    '/Users/nraogra/Desktop/OH_test.csv'
-    ]
 
 print("This script matches reference and generated files via csv file.")
-print("Reference and generated files must be .srt or .txt")
+print("Reference and generated files must be .srt, .vtt, or .txt")
 
 # check that command has reference folder location, generated folder location,
 # and output file location
