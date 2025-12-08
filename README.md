@@ -17,7 +17,7 @@ Create a CSV file ("output.csv") where WER will be written to, with the followin
 
 The script matches reference files with generated files by looking up the pairs of filenames in each row. The corresponding WER will be written to the "WER" column in the same row.
 
-Files can be in TXT (".txt") or SRT (".srt") format. This script uses [srt2text](https://github.com/yumstar/srt2text/) to convert SRT files to raw text data. `srt2text.py` should be in the same directory that this script is run from. (Note: the folder-level option for srt2text won't work if there is a hidden DS_store file in the input folder.)
+Files can be in TXT (".txt"), SRT (".srt"), or VTT (".vtt") format. 
 
 Before running this script, install [werpy](https://github.com/analyticsinmotion/werpy/blob/main/README.md): `pip install werpy` or `pip3 install werpy`
 
@@ -35,7 +35,7 @@ werpy also includes third-party packages distributed under the BSD-3-Clause lice
   - Pandas - [https://github.com/pandas-dev/pandas/blob/main/LICENSE](https://github.com/pandas-dev/pandas/blob/main/LICENSE)
   - Cython - [https://github.com/cython/cython/blob/master/LICENSE.txt](https://github.com/cython/cython/blob/master/LICENSE.txt)
 
-srt2text is released under an MIT license. Please refer to its [LICENSE](https://github.com/yumstar/srt2text/?tab=MIT-1-ov-file#MIT-1-ov-file) for full details. 
+Conversion from SRT is adapted from [srt2text](https://github.com/yumstar/srt2text/). Please refer to its [LICENSE](https://github.com/yumstar/srt2text/?tab=MIT-1-ov-file#MIT-1-ov-file) for full details. 
 
 ## Misc
 Feedback, comments, suggestions, etc are welcome!
